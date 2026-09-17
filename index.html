@@ -1,40 +1,48 @@
-원<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>도덕 수업 - 빙고 타자 응원 부적</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
+    <!-- Tone.js (효과음) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Canvas Confetti (폭죽 효과) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
+        :root {
+            --app-height: 100vh;
+        }
         body {
             font-family: 'Gowun Dodum', sans-serif;
             background-color: #fdf2f8; 
             overscroll-behavior: none;
             margin: 0;
             padding: 0;
-            height: 100vh;
+            height: 100dvh; 
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            touch-action: pan-x pan-y;
         }
 
         .font-jua { font-family: 'Jua', sans-serif; }
 
+        /* 카드 3D 뒤집기 효과 */
         .card-container {
             perspective: 1000px;
             width: 100%;
             aspect-ratio: 1 / 1;
             position: relative;
-            transition: z-index 0s 0.2s; /* active 해제 시 z-index 지연 */
+            z-index: 1;
         }
         
-        .card-container.active {
-            z-index: 20; /* 활성화된 카드 최상단으로 */
-            transition: z-index 0s; 
-        }
+        .card-container.active { z-index: 20; }
 
         .card-inner {
             position: relative;
@@ -44,8 +52,9 @@
             transform-style: preserve-3d;
         }
         
+        /* 모바일 화면에서 활성화된 카드가 잘 보이도록 확대 */
         .card-container.active .card-inner {
-            transform: rotateY(180deg) scale(1.15); /* 텍스트 창 삭제 대신 카드 크기 확대 */
+            transform: rotateY(180deg) scale(1.25); 
         }
         
         .card-container.completed .card-inner {
@@ -57,12 +66,12 @@
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
-            border-radius: 12px;
+            border-radius: 8px; 
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 2px;
             text-align: center;
             word-break: keep-all;
         }
@@ -71,7 +80,7 @@
             background-color: #fbcfe8; 
             border: 2px solid #f9a8d4;
             color: #be185d;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: bold;
         }
         
@@ -80,7 +89,7 @@
             border: 2px solid #f472b6;
             transform: rotateY(180deg);
             color: #db2777;
-            font-size: 0.9rem;
+            font-size: 0.85rem; 
             font-weight: bold;
             font-family: 'Jua', sans-serif;
             transition: all 0.3s ease;
@@ -92,25 +101,64 @@
             border-color: #4ade80;
         }
 
-        /* 활성화된 카드 (타겟 문구) 강력한 시각 효과 */
+        /* ---------------------------------------------------- */
+        /* ✨ 신규: 활성화된 카드 블링블링(Bling) 애니메이션 효과 */
+        /* ---------------------------------------------------- */
         .card-container.active .card-back {
-            box-shadow: 0 0 25px 8px rgba(244, 114, 182, 0.7);
+            box-shadow: 0 0 25px 8px rgba(244, 114, 182, 0.9);
             border: 3px solid #be185d;
             background-color: #fdf2f8;
             color: #be185d;
-            font-size: 1.1rem; /* 글씨 크기 키움 */
+            font-size: 1rem;
+            overflow: hidden; /* 빛 스쳐가는 효과가 둥근 테두리 안에서만 보이게 */
         }
 
+        /* 빛이 스쳐 지나가는 효과 (Shine) */
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+        .card-container.active .card-back::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -100%;
+            width: 50%; height: 200%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-20deg);
+            animation: shine 1.5s infinite;
+            pointer-events: none;
+        }
+
+        /* 카드 밖에서 회전하는 마법 별 효과 */
+        @keyframes bling-stars {
+            0% { transform: scale(0.5) rotate(0deg); opacity: 0; }
+            50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+            100% { transform: scale(0.5) rotate(360deg); opacity: 0; }
+        }
+        .card-container.active::before,
+        .card-container.active::after {
+            content: '✨';
+            position: absolute;
+            font-size: 1.5rem;
+            z-index: 30; /* 카드보다 살짝 위로 */
+            animation: bling-stars 1.5s infinite ease-in-out;
+            pointer-events: none;
+        }
+        .card-container.active::before { top: -15px; left: -15px; }
+        .card-container.active::after { bottom: -15px; right: -15px; animation-delay: 0.75s; }
+
+        /* 4.5초 타이머 바 */
         @keyframes shrink {
             from { width: 100%; }
             to { width: 0%; }
         }
         .timer-bar {
-            height: 10px;
+            height: 8px;
             background-color: #f43f5e;
-            border-radius: 5px;
+            border-radius: 4px;
         }
         
+        /* 점수 증감 애니메이션 */
         @keyframes scoreBump {
             0% { transform: scale(1); }
             50% { transform: scale(1.4); }
@@ -118,6 +166,7 @@
         }
         .score-anim { animation: scoreBump 0.3s ease; }
 
+        /* 오타 발생 시 흔들림 애니메이션 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-6px); }
@@ -127,7 +176,7 @@
         .shake { animation: shake 0.3s forwards; }
         .error-bg { background-color: #ffe4e6 !important; border-color: #f43f5e !important; color: #be123c !important; }
         
-        /* 빙고 보너스 이펙트 */
+        /* 빙고 보너스 이펙트 텍스트 */
         @keyframes bingoPopup {
             0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
             20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
@@ -149,67 +198,90 @@
             animation: bingoPopup 1.5s forwards;
         }
         
+        /* 모바일 키보드 호환을 위한 Flex 레이아웃 */
+        #game-screen {
+            display: flex;
+            flex-direction: column;
+            height: 100dvh; 
+        }
         #game-area {
             flex-grow: 1;
-            overflow-y: auto;
-            padding-bottom: 140px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: visible; 
+            padding: 10px;
+        }
+        #input-footer {
+            flex-shrink: 0;
+            padding-bottom: env(safe-area-inset-bottom, 16px);
         }
     </style>
 </head>
 <body>
 
-    <div id="start-screen" class="absolute inset-0 z-50 bg-pink-50 flex flex-col items-center justify-center p-6">
+    <!-- 접속 제한 화면 -->
+    <div id="access-denied-screen" class="hidden absolute inset-0 z-50 bg-gray-100 flex flex-col items-center justify-center p-6">
+        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md text-center border-4 border-gray-300">
+            <div class="text-6xl mb-4">⏳</div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-4 font-jua">지금은 게임 접속 시간이 아닙니다.</h1>
+            <p id="access-time-message" class="text-gray-600 font-bold leading-relaxed text-sm"></p>
+        </div>
+    </div>
+
+    <!-- 시작 화면 -->
+    <div id="start-screen" class="hidden absolute inset-0 z-40 bg-pink-50 flex flex-col items-center justify-center p-6">
         <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md text-center border-4 border-pink-100">
             <h1 class="text-4xl font-bold text-pink-500 mb-4 font-jua">🍀 응원 부적 만들기</h1>
             <p class="text-gray-600 mb-8 font-bold leading-relaxed text-sm sm:text-base">
                  확대되어 빛나는 카드의 문구를 그대로 치세요.<br>
-                <b>(빙고 1줄 완성 시 보너스 +5점!)</b><br>
+                <b>(빙고 1줄 완성 시 팡파르와 +5점!)</b><br>
                 빠르고 정확하게 빙고를 만들어보세요!
             </p>
             
             <div class="mb-6">
-                <label for="name-input" class="block text-left text-pink-600 font-bold mb-2 ml-2">나의 이름(별명)을 적어주세요. 예시:00아, 00야</label>
-                <input type="text" id="name-input" class="w-full bg-gray-50 border-2 border-pink-200 rounded-2xl px-5 py-4 text-xl text-center focus:outline-none focus:border-pink-500 font-bold transition" placeholder="예: 도덕아, 윤리야 " autocomplete="off" maxlength="10">
+                <label for="name-input" class="block text-left text-pink-600 font-bold mb-2 ml-2">나의 이름(별명)을 적어주세요.</label>
+                <input type="text" id="name-input" class="w-full bg-gray-50 border-2 border-pink-200 rounded-2xl px-5 py-4 text-xl text-center focus:outline-none focus:border-pink-500 font-bold transition" placeholder="예: 도덕아, 윤리야" autocomplete="off" maxlength="10">
                 <p id="name-error" class="text-rose-500 text-sm mt-2 hidden font-bold">이름을 꼭 입력해 주세요!</p>
             </div>
 
             <button onclick="checkNameAndStart()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg text-xl transition transform hover:scale-105">
-                게임 시작
+                게임 시작 (소리 켜기)
             </button>
         </div>
     </div>
 
-    <div id="game-screen" class="hidden flex-col h-full relative">
-        <header class="p-3 bg-white shadow-sm text-center z-10 flex justify-between items-center px-4">
-            <div class="text-gray-700 font-bold bg-pink-50 px-3 py-2 rounded-xl border border-pink-200 shadow-inner flex flex-col">
-                <span class="text-xs text-pink-500">시간</span>
-                <span id="total-time-display" class="text-xl text-rose-500">60</span>
+    <!-- 게임 화면 -->
+    <div id="game-screen" class="hidden relative">
+        <header class="p-2 bg-white shadow-sm text-center z-10 flex justify-between items-center px-4 flex-shrink-0">
+            <div class="text-gray-700 font-bold bg-pink-50 px-3 py-1 rounded-xl border border-pink-200 shadow-inner flex flex-col">
+                <span class="text-[10px] text-pink-500">시간</span>
+                <span id="total-time-display" class="text-lg text-rose-500">60</span>
             </div>
-            <h1 class="text-xl font-bold text-pink-600 font-jua flex-1">다정한 말 빙고</h1>
-            <div class="text-gray-700 font-bold bg-yellow-50 px-3 py-2 rounded-xl border border-yellow-300 shadow-inner flex flex-col min-w-[70px]">
-                <span class="text-xs text-yellow-600">점수</span>
-                <span id="score-display" class="text-xl text-yellow-600">40</span>
+            <h1 class="text-lg font-bold text-pink-600 font-jua flex-1 m-0">다정한 말 빙고</h1>
+            <div class="text-gray-700 font-bold bg-yellow-50 px-3 py-1 rounded-xl border border-yellow-300 shadow-inner flex flex-col min-w-[60px]">
+                <span class="text-[10px] text-yellow-600">점수</span>
+                <span id="score-display" class="text-lg text-yellow-600">40</span>
             </div>
         </header>
 
-        <main id="game-area" class="p-4 flex flex-col items-center justify-start mt-4 relative">
-            <div id="grid-container" class="grid grid-cols-4 gap-2 w-full max-w-md mb-6"></div>
-            
-            <!-- 빙고 이펙트 컨테이너 -->
+        <main id="game-area" class="relative">
+            <div id="grid-container" class="grid grid-cols-4 gap-1 sm:gap-2 w-full max-w-sm max-h-full aspect-square"></div>
             <div id="bingo-overlay" class="hidden bingo-effect">BINGO! +5</div>
         </main>
 
-        <footer id="input-footer" class="fixed bottom-0 left-0 w-full bg-white px-4 py-4 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.1)] z-30 rounded-t-3xl border-t border-pink-100">
-            <div class="max-w-md mx-auto flex flex-col items-center">
-                <!-- 하단 타겟 텍스트 삭제, 타이머 바만 표시 -->
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-4 overflow-hidden">
+        <footer id="input-footer" class="w-full bg-white px-4 py-3 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.1)] z-30 rounded-t-2xl border-t border-pink-100">
+            <div class="max-w-sm mx-auto flex flex-col items-center">
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mb-2 overflow-hidden">
                     <div id="card-timer-bar" class="timer-bar w-full"></div>
                 </div>
-                <input type="text" id="type-input" class="w-full bg-pink-50 border-2 border-pink-300 rounded-2xl px-4 py-4 text-xl text-center focus:outline-none focus:border-pink-500 transition-colors shadow-inner font-bold" placeholder="위에서 빛나는 카드를 보고 치세요!" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled>
+                <input type="text" id="type-input" class="w-full bg-pink-50 border-2 border-pink-300 rounded-xl px-4 py-3 text-lg text-center focus:outline-none focus:border-pink-500 transition-colors shadow-inner font-bold" placeholder="위에서 빛나는 카드를 보고 치세요!" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled>
             </div>
         </footer>
     </div>
 
+    <!-- 결과 화면 -->
     <div id="result-screen" class="hidden absolute inset-0 bg-yellow-50 flex flex-col items-center justify-center p-6 z-50 overflow-y-auto">
         <h1 class="text-3xl font-bold text-pink-500 mb-2 font-jua mt-8">🎉 수고했어요! 🎉</h1>
         <p class="text-gray-600 mb-2 text-center font-bold">최종 점수: <span id="final-score" class="text-rose-500 text-xl"></span>점</p>
@@ -229,33 +301,57 @@
     </div>
 
     <script>
-        // 선생님 지정 16개 멘트
+        /* -------------------------------------------------------------------------- */
+        /* [접속 가능 시간 설정] 원하시는 날짜와 시간으로 수정하세요. (YYYY-MM-DDTHH:mm:ss) */
+        /* -------------------------------------------------------------------------- */
+        const ACCESS_START = new Date('2026-09-01T00:00:00'); 
+        const ACCESS_END = new Date('2026-12-31T23:59:59'); 
+        
+        function checkAccessTime() {
+            const now = new Date();
+            if (now < ACCESS_START || now > ACCESS_END) {
+                document.getElementById('access-denied-screen').classList.remove('hidden');
+                
+                const startStr = ACCESS_START.toLocaleString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const endStr = ACCESS_END.toLocaleString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                
+                document.getElementById('access-time-message').innerText = `접속 가능 시간:\n${startStr} ~ ${endStr}`;
+                return false;
+            }
+            document.getElementById('start-screen').classList.remove('hidden');
+            return true;
+        }
+
+        window.onload = () => {
+            checkAccessTime();
+        };
+
+        // 선생님 지정 16개 멘트 (정확히 유지)
         const rawSentences = [
-            "넌 마음이 따뜻해", "네가 참 좋아", "넌 잘하고 있어", "넌 소중해", 
-            "가장 빛나는 너", "할 수 있어", "수고했어 토닥토닥", "곁에 있을게", 
-            "다 잘 될거야", "꽃길만 걷자", "너를 믿을게", "고마워 항상", 
-            "늘 응원해", "웃는게 예쁜 너", "힘내 파이팅", "열심히 하는 네가 멋져"
+            "넌 마음이 따뜻해", "열심히 하는 네가 멋져", "잘하고 있어", "넌 소중해", 
+            "빛나는 너야", "할 수 있어", "수고했어 토닥토닥", "곁에 있을게", 
+            "다 잘 될거야", "꽃길만 걷자", "믿어줄게", "고마워 항상", 
+            "늘 응원해", "웃는게 예뻐", "힘내 파이팅", "네가 좋아"
         ];
         
         const emojiCharacters = ['🐥', '🦦', '🧸', '🐰', '🐶', '🐱', '🐹', '🐼', '🦊', '🌻', '🌈'];
         
-        // 빙고 판별을 위한 라인 정의 (가로, 세로, 대각선)
         const bingoLines = [
-            [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15], // 가로
-            [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15], // 세로
-            [0, 5, 10, 15], [3, 6, 9, 12] // 대각선
+            [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15], 
+            [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15], 
+            [0, 5, 10, 15], [3, 6, 9, 12] 
         ];
         
         let board = [];
         let totalTime = 60;
-        let cardTime = 4.5; // 4.5초
+        let cardTime = 4.5; 
         let score = 40; 
         let totalInterval, cardTimeout;
         let activeIndex = -1;
         let isPlaying = false;
         let playerName = "";
         let collectedCards = [];
-        let achievedBingos = []; // 달성한 빙고 라인 인덱스 저장
+        let achievedBingos = []; 
         let typoDeducted = false;
         let isComposing = false; 
 
@@ -266,6 +362,64 @@
         const cardTimerBar = document.getElementById('card-timer-bar');
         const bingoOverlay = document.getElementById('bingo-overlay');
 
+        let synthCorrect, synthError, synthBingo;
+        let isAudioInit = false;
+
+        async function initAudio() {
+            if(isAudioInit) return;
+            await Tone.start();
+            
+            // 정답 사운드: 코인/레벨업 느낌의 경쾌한 Square 웨이브
+            synthCorrect = new Tone.Synth({
+                oscillator: { type: "square" },
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            synthCorrect.volume.value = -8;
+
+            // 오타 사운드: 극적인 버저 느낌의 묵직한 불협화음
+            synthError = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "sawtooth" },
+                envelope: { attack: 0.05, decay: 0.1, sustain: 0.2, release: 0.5 }
+            }).toDestination();
+            synthError.volume.value = -5;
+
+            // 빙고 팡파르
+            synthBingo = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "square" },
+                envelope: { attack: 0.05, decay: 0.2, sustain: 0.3, release: 1 }
+            }).toDestination();
+            synthBingo.volume.value = -8;
+
+            isAudioInit = true;
+        }
+
+        function playCorrectSound() {
+            if(!isAudioInit) return;
+            const now = Tone.now();
+            // 차라랑 올라가는 아르페지오 사운드
+            synthCorrect.triggerAttackRelease("C5", "16n", now);
+            synthCorrect.triggerAttackRelease("E5", "16n", now + 0.1);
+            synthCorrect.triggerAttackRelease("G5", "16n", now + 0.2);
+            synthCorrect.triggerAttackRelease("C6", "8n", now + 0.3);
+        }
+
+        function playErrorSound() {
+            if(!isAudioInit) return;
+            const now = Tone.now();
+            // 묵직하게 하행하는 불협화음 버저 소리 (땡!)
+            synthError.triggerAttackRelease(["Eb3", "A3"], "16n", now);
+            synthError.triggerAttackRelease(["C3", "Gb3"], "4n", now + 0.15);
+        }
+
+        function playBingoSound() {
+            if(!isAudioInit) return;
+            const now = Tone.now();
+            synthBingo.triggerAttackRelease(["C4", "E4", "G4"], "8n", now);
+            synthBingo.triggerAttackRelease(["F4", "A4", "C5"], "8n", now + 0.15);
+            synthBingo.triggerAttackRelease(["G4", "B4", "D5"], "8n", now + 0.3);
+            synthBingo.triggerAttackRelease(["C5", "E5", "G5"], "2n", now + 0.45);
+        }
+
         function shuffle(array) {
             let arr = [...array];
             for (let i = arr.length - 1; i > 0; i--) {
@@ -275,7 +429,7 @@
             return arr;
         }
 
-        function checkNameAndStart() {
+        async function checkNameAndStart() {
             const nameInput = document.getElementById('name-input').value.trim();
             if (!nameInput) {
                 document.getElementById('name-error').classList.remove('hidden');
@@ -284,6 +438,8 @@
             playerName = nameInput;
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
+            
+            await initAudio(); 
             startGame();
         }
 
@@ -321,12 +477,21 @@
             }, 500);
         }
 
+        function triggerConfetti() {
+            var duration = 2000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ec4899', '#fbbf24', '#34d399'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ec4899', '#fbbf24', '#34d399'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
         function checkForBingo() {
             let newBingos = 0;
             bingoLines.forEach((line, index) => {
-                // 아직 달성하지 않은 빙고 라인인지 확인
                 if (!achievedBingos.includes(index)) {
-                    // 4칸이 모두 완료되었는지 확인
                     if (line.every(pos => board[pos].completed)) {
                         achievedBingos.push(index);
                         newBingos++;
@@ -338,16 +503,16 @@
                 const bonus = newBingos * 5;
                 updateScore(bonus, 'text-green-500');
                 
-                // 빙고 시각 효과
+                playBingoSound();
+                triggerConfetti();
+                
                 bingoOverlay.innerText = `BINGO! +${bonus}`;
                 bingoOverlay.classList.remove('hidden');
                 bingoOverlay.style.animation = 'none';
-                void bingoOverlay.offsetWidth; // 리플로우
+                void bingoOverlay.offsetWidth; 
                 bingoOverlay.style.animation = 'bingoPopup 1.5s forwards';
                 
-                setTimeout(() => {
-                    bingoOverlay.classList.add('hidden');
-                }, 1500);
+                setTimeout(() => { bingoOverlay.classList.add('hidden'); }, 1500);
             }
         }
 
@@ -364,9 +529,7 @@
             totalInterval = setInterval(() => {
                 totalTime--;
                 totalTimeDisplay.innerText = totalTime;
-                if (totalTime <= 0) {
-                    endGame();
-                }
+                if (totalTime <= 0) endGame();
             }, 1000);
 
             setTimeout(pickNextCard, 500);
@@ -390,7 +553,7 @@
             
             typoDeducted = false;
             removeErrorVisuals();
-            currentCardEl.classList.add('active'); // 활성화(강조)
+            currentCardEl.classList.add('active'); 
             
             typeInput.value = '';
             typeInput.focus();
@@ -401,11 +564,11 @@
 
             clearTimeout(cardTimeout);
             
-            // 시간 초과 처리
             cardTimeout = setTimeout(() => {
                 if (!isPlaying) return;
                 
                 currentCardEl.classList.remove('active'); 
+                playErrorSound(); 
                 
                 typeInput.blur(); 
                 setTimeout(() => { typeInput.value = ''; }, 10);
@@ -434,7 +597,6 @@
             const typedText = e.target.value; 
             const targetText = board[activeIndex].text;
 
-            // 성공 (일치)
             if (typedText === targetText) {
                 clearTimeout(cardTimeout); 
                 board[activeIndex].completed = true;
@@ -444,10 +606,11 @@
                 cardEl.classList.remove('active');
                 cardEl.classList.add('completed'); 
                 
+                playCorrectSound(); 
                 updateScore(10, 'text-green-500'); 
                 removeErrorVisuals();
                 
-                checkForBingo(); // 빙고 확인!
+                checkForBingo(); 
 
                 typeInput.blur();
                 setTimeout(() => { typeInput.value = ''; }, 10);
@@ -463,24 +626,20 @@
             }
 
             let isError = false;
-
             if (typedText.length > targetText.length) {
                 isError = true;
             } else {
                 for (let i = 0; i < typedText.length; i++) {
                     if (typedText[i] !== targetText[i]) {
-                        if (i === typedText.length - 1 && isComposing) {
-                            break; 
-                        } else {
-                            isError = true;
-                            break;
-                        }
+                        if (i === typedText.length - 1 && isComposing) break; 
+                        else { isError = true; break; }
                     }
                 }
             }
 
             if (isError) {
                 if (!typoDeducted) {
+                    playErrorSound(); 
                     updateScore(-1, 'text-rose-500'); 
                     triggerErrorVisuals();
                     typoDeducted = true; 
@@ -507,6 +666,8 @@
             
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
+            
+            setTimeout(triggerConfetti, 500);
         }
 
         function generateTalisman(phrase) {
@@ -516,57 +677,47 @@
             canvas.width = 600;
             canvas.height = 850;
 
-            // 배경
             ctx.fillStyle = '#FFE066'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 바깥 테두리
             const outerMargin = 30;
             ctx.strokeStyle = '#1B5E20';
             ctx.lineWidth = 12;
             ctx.strokeRect(outerMargin, outerMargin, canvas.width - outerMargin * 2, canvas.height - outerMargin * 2);
 
-            // 안쪽 테두리 (점선)
             const innerMargin = 45;
             ctx.setLineDash([10, 10]);
             ctx.lineWidth = 4;
             ctx.strokeRect(innerMargin, innerMargin, canvas.width - innerMargin * 2, canvas.height - innerMargin * 2);
             ctx.setLineDash([]); 
             
-            // 🍀 응원 부적 🍀 
             ctx.fillStyle = '#1B5E20';
             ctx.font = 'bold 50px "Jua", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('🍀 응원 부적 🍀', canvas.width / 2, 110);
             
-            // 서브 텍스트
             ctx.fillStyle = '#222222';
             ctx.font = 'bold 24px "Gowun Dodum", sans-serif';
             ctx.fillText('(나에게 건네는 다정한 말)', canvas.width / 2, 160);
 
-            // 대형 랜덤 이모지 
             const randomEmoji = emojiCharacters[Math.floor(Math.random() * emojiCharacters.length)];
             ctx.font = '160px Arial'; 
             ctx.fillText(randomEmoji, canvas.width / 2, 350);
 
-            // 플레이어 이름
             ctx.fillStyle = '#333333';
             ctx.font = 'bold 50px "Gowun Dodum", sans-serif';
             ctx.fillText(`[ ${playerName} ]`, canvas.width / 2, 520);
 
-            // 뽑힌 응원 멘트
             ctx.fillStyle = '#1B5E20';
             ctx.font = 'bold 65px "Jua", sans-serif';
             ctx.fillText(phrase, canvas.width / 2, 620);
 
-            // 하단 메시지
             ctx.fillStyle = '#1B5E20'; 
             ctx.font = 'bold 28px "Gowun Dodum", sans-serif';
             ctx.fillText('♥도덕쌤(연경T)이', canvas.width / 2, 750);
             ctx.fillText('너의 앞 날을 항상 응원할게♥', canvas.width / 2, 790);
 
-            // 이미지 추출 다운로드
             const dataURL = canvas.toDataURL('image/png');
             document.getElementById('talisman-preview').src = dataURL;
             document.getElementById('download-btn').href = dataURL;
